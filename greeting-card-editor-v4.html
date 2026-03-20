@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>محرر بطاقات المعايدة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Scheherazade+New:wght@400;500;600;700&family=Reem+Kufi:wght@400;500;600;700&family=Lateef:wght@300;400;500;600;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Aref+Ruqaa&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&family=Changa:wght@300;400;500;600;700;800&family=Harmattan:wght@400;500;600;700&family=Rakkas&family=Mada:wght@300;400;500;600;700;900&family=Lalezar&family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Readex+Pro:wght@300;400;500;600;700&family=Noto+Kufi+Arabic:wght@400;500;600;700&family=Reem+Kufi+Fun:wght@400;500;600;700&family=Zain:wght@300;400;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700;800;900&family=Noto+Serif+Arabic:wght@300;400;500;600;700;800;900&family=Mirza:wght@400;500;600;700&family=Ruwudu:wght@400;500;600;700&family=Katibeh&family=Kufam:wght@400;500;600;700;900&family=Jomhuria&family=Gulzar&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+/* ══════════════════════════════════════════════════════════
+   VARIABLES & RESET
+══════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  /* ── Beige palette ── */
+  --bg-from:#f5f0e8;
+  --bg-to:#ede4d3;
+  --panel-bg:#faf7f2;
+  --panel-border:#e0d5c0;
+  --topbar-bg:#fdf9f3;
+  --topbar-border:#ddd0b8;
+
+  /* ── Text ── */
+  --txt:#3a2e1e;
+  --txt-mid:#6b5a42;
+  --txt-muted:#a08c6e;
+
+  /* ── Gold accent ── */
+  --gold:#c49a28;
+  --gold-l:#e8c96a;
+  --gold-d:#8a6b18;
+  --gold-bg:rgba(196,154,40,.08);
+  --gold-border:rgba(196,154,40,.28);
+
+  /* ── UI ── */
+  --radius:10px;
+  --shadow:0 2px 12px rgba(100,70,20,.1);
+  --shadow-lg:0 8px 30px rgba(100,70,20,.15);
+}
+
+html{height:100%;height:100dvh;font-size:16px}
+body{
+  min-height:100%;
+  min-height:100dvh;
+  font-family:'Tajawal',sans-serif;
+  color:var(--txt);
+  background: linear-gradient(160deg, var(--bg-from) 0%, #f0e8d8 50%, var(--bg-to) 100%);
+  background-attachment:fixed;
+  display:flex;flex-direction:column;
+  overflow-x:hidden;
+  /* دعم الـ notch وDynamic Island في iPhone */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOP BAR
+══════════════════════════════════════════════════════════ */
+.topbar{
+  height:54px;
+  background:var(--topbar-bg);
+  border-bottom:1px solid var(--topbar-border);
+  box-shadow:0 2px 10px rgba(100,70,20,.08);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;flex-shrink:0;gap:10px;z-index:300;
+  position:sticky;top:0;
+}
+.topbar-logo{
+  font-family:'Amiri',serif;font-size:1.1rem;font-weight:700;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  white-space:nowrap;letter-spacing:.02em;
+}
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+
+/* ══════════════════════════════════════════════════════════
+   MAIN LAYOUT  — desktop: side-by-side | mobile: stacked
+══════════════════════════════════════════════════════════ */
+.main{
+  display:flex;
+  flex:1;
+  gap:0;
+  min-height:0;
+  height:calc(100dvh - 54px);
+}
+
+/* ══════════════════════════════════════════════════════════
+   CANVAS AREA
+══════════════════════════════════════════════════════════ */
+.canvas-wrap{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  overflow:auto;
+  min-height:0;
+  gap:10px;
+}
+/* الحاوية تُضبط حجمها بـ JS لتطابق البطاقة المُصغَّرة تماماً */
+.canvas-center{
+  position:relative;
+  flex-shrink:0;
+  overflow:hidden;
+}
+
+#card{
+  position:absolute;
+  top:0; left:0;
+  /* العرض/الارتفاع + transform يُضبطان بـ JS */
+  transform-origin:top left;
+  box-shadow:0 10px 50px rgba(80,50,10,.3), 0 0 0 1px rgba(196,154,40,.2);
+  border-radius:6px;
+  background:#111;
+  overflow:hidden;
+}
+#card-bg-img{
+  position:absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  object-fit:fill;    /* يملأ بالضبط — الأبعاد صحيحة من JS */
+  pointer-events:none;
+  display:none;
+}
+
+/* empty state */
+#empty-state{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;
+  background:linear-gradient(135deg,#ede4d3,#e8dcc8);
+  color:var(--txt-muted);pointer-events:none;
+}
+#empty-state .ei{font-size:3.5rem;opacity:.35}
+#empty-state p{font-size:.9rem;text-align:center;line-height:1.9;color:var(--txt-mid)}
+#empty-state strong{color:var(--gold-d)}
+
+/* text node */
+#txt-layer{position:absolute;inset:0;z-index:10;pointer-events:none}
+#txt-node{
+  position:absolute;
+  white-space:nowrap;
+  user-select:none;
+  transform:translate(-50%,-50%);
+  line-height:1.2;
+  display:none;
+  pointer-events:none;  /* ثابت — لا سحب */
+}
+/* لا drag handle ولا border selection */
+
+/* info bar */
+.infobar{
+  margin-top:10px;
+  background:rgba(255,253,248,.85);
+  backdrop-filter:blur(6px);
+  border:1px solid var(--panel-border);
+  border-radius:20px;
+  padding:5px 16px;
+  font-size:.7rem;color:var(--txt-muted);
+  white-space:nowrap;
+  box-shadow:var(--shadow);
+  text-align:center;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SIDE PANEL
+══════════════════════════════════════════════════════════ */
+.side-panel{
+  width:300px;
+  min-width:280px;
+  background:var(--panel-bg);
+  border-right:1px solid var(--panel-border);
+  box-shadow:-4px 0 18px rgba(100,70,20,.07);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  flex-shrink:0;
+}
+
+/* tabs */
+.tabs{
+  display:flex;
+  border-bottom:1px solid var(--panel-border);
+  background:var(--topbar-bg);
+  flex-shrink:0;
+}
+.tab{
+  flex:1;padding:11px 8px;font-size:.78rem;font-weight:700;
+  cursor:pointer;color:var(--txt-muted);
+  border-bottom:2px solid transparent;
+  transition:all .2s;text-align:center;white-space:nowrap;
+}
+.tab.on{color:var(--gold-d);border-bottom-color:var(--gold)}
+.tab:hover:not(.on){color:var(--txt-mid)}
+
+/* pane scroll */
+.pane{flex:1;overflow-y:auto;overflow-x:hidden}
+.pane::-webkit-scrollbar{width:4px}
+.pane::-webkit-scrollbar-thumb{background:var(--panel-border);border-radius:4px}
+
+/* sections */
+.sec{padding:14px 16px;border-bottom:1px solid var(--panel-border)}
+.sec-title{
+  font-size:.68rem;font-weight:800;letter-spacing:.1em;
+  color:var(--gold-d);text-transform:uppercase;margin-bottom:10px;
+  display:flex;align-items:center;gap:7px;
+}
+.sec-title::before{content:'';display:block;width:12px;height:2px;background:var(--gold)}
+
+/* ══════════════════════════════════════════════════════════
+   FORM CONTROLS
+══════════════════════════════════════════════════════════ */
+.lbl{display:block;font-size:.7rem;color:var(--txt-muted);margin-bottom:4px;margin-top:9px}
+.lbl:first-child{margin-top:0}
+
+input[type=text]{
+  width:100%;
+  background:#fff;
+  border:1.5px solid var(--panel-border);
+  border-radius:var(--radius);
+  padding:9px 12px;
+  color:var(--txt);
+  font-family:'Tajawal',sans-serif;
+  font-size:.95rem;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.04);
+}
+input[type=text]:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(196,154,40,.12);
+}
+
+select{
+  width:100%;
+  background:#fff;
+  border:1.5px solid var(--panel-border);
+  border-radius:var(--radius);
+  padding:9px 12px;
+  color:var(--txt);
+  font-family:'Tajawal',sans-serif;
+  font-size:.87rem;
+  outline:none;cursor:pointer;appearance:none;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.04);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23c49a28' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:left 10px center;
+}
+select option{background:#fff;color:var(--txt)}
+
+input[type=range]{
+  width:100%;-webkit-appearance:none;height:5px;border-radius:5px;
+  outline:none;cursor:pointer;margin:6px 0;
+  background:linear-gradient(90deg,var(--gold) 0%,#e0d5c0 0%);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:var(--gold);cursor:pointer;
+  border:3px solid #fff;
+  box-shadow:0 2px 6px rgba(100,70,20,.25);
+}
+input[type=color]{
+  width:36px;height:36px;
+  border:2px solid var(--panel-border);border-radius:8px;
+  background:none;cursor:pointer;padding:2px;flex-shrink:0;
+}
+
+/* range wrapper */
+.rw{position:relative;padding-top:20px}
+.rw .rv{position:absolute;top:0;right:0;font-size:.68rem;color:var(--gold-d);font-weight:800}
+.rw .rl{position:absolute;top:0;left:0;font-size:.66rem;color:var(--txt-muted)}
+
+/* ══════════════════════════════════════════════════════════
+   TOGGLE BUTTONS
+══════════════════════════════════════════════════════════ */
+.tog-row{display:flex;gap:5px;flex-wrap:wrap}
+.tog{
+  flex:1;padding:7px 5px;
+  border:1.5px solid var(--panel-border);border-radius:8px;
+  background:#fff;color:var(--txt-muted);
+  font-family:'Tajawal',sans-serif;font-size:.75rem;
+  cursor:pointer;transition:all .18s;text-align:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.tog.on,.tog:hover{
+  border-color:var(--gold);
+  background:var(--gold-bg);
+  color:var(--gold-d);
+}
+
+/* ══════════════════════════════════════════════════════════
+   SWATCHES
+══════════════════════════════════════════════════════════ */
+.sw-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.sw{
+  width:24px;height:24px;border-radius:6px;cursor:pointer;
+  border:2px solid transparent;transition:transform .14s,border-color .14s;flex-shrink:0;
+  box-shadow:0 1px 3px rgba(0,0,0,.12);
+}
+.sw:hover{transform:scale(1.2)}
+.sw.on{border-color:var(--gold-d);transform:scale(1.15);box-shadow:0 2px 6px rgba(0,0,0,.2)}
+
+/* ══════════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px 16px;border-radius:var(--radius);
+  font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:700;
+  cursor:pointer;border:none;transition:all .2s;white-space:nowrap;
+}
+.btn-gold{
+  background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));
+  color:#fff;
+  box-shadow:0 3px 12px rgba(196,154,40,.35);
+  text-shadow:0 1px 2px rgba(0,0,0,.15);
+}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(196,154,40,.45)}
+.btn-gold:active{transform:translateY(0)}
+.btn-gold:disabled{opacity:.38;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{
+  background:#fff;color:var(--txt-mid);
+  border:1.5px solid var(--panel-border);
+  box-shadow:0 1px 4px rgba(0,0,0,.07);
+}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-d);background:var(--gold-bg)}
+.btn-sm{padding:7px 12px;font-size:.78rem;border-radius:8px}
+
+/* ══════════════════════════════════════════════════════════
+   POSITION GRID
+══════════════════════════════════════════════════════════ */
+.pos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:108px;margin:0 auto}
+.pos-cell{
+  aspect-ratio:1;border-radius:7px;
+  border:1.5px solid var(--panel-border);
+  cursor:pointer;transition:all .18s;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;color:var(--txt-muted);
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.pos-cell:hover{border-color:var(--gold);background:var(--gold-bg);color:var(--gold-d)}
+.pos-cell.on{border-color:var(--gold);background:var(--gold-bg);color:var(--gold-d);box-shadow:0 2px 8px rgba(196,154,40,.2)}
+
+/* ══════════════════════════════════════════════════════════
+   IMAGE GALLERY (designs panel)
+══════════════════════════════════════════════════════════ */
+.img-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:14px 16px;
+}
+.img-card{
+  /* نسبة ثابتة 3:4 تناسب الصور العمودية وتعمل مع الأفقية */
+  aspect-ratio:3/4;
+  border-radius:10px;
+  overflow:hidden;
+  cursor:pointer;
+  border:2px solid var(--panel-border);
+  transition:border-color .2s,transform .2s,box-shadow .2s;
+  position:relative;
+  background:#ddd5c5;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.img-card img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;        /* يعرض الصورة كاملة بلا قص بلا تشويه */
+  object-position:center;
+  background:#ddd5c5;
+}
+.img-card:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.img-card.on{
+  border-color:var(--gold);
+  box-shadow:0 0 0 1px var(--gold),0 6px 20px rgba(196,154,40,.2);
+}
+.img-card-label{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(0,0,0,.7));
+  padding:22px 8px 7px;
+  font-size:.68rem;text-align:center;color:#fff;
+  font-weight:700;
+}
+
+/* no images placeholder */
+.no-imgs{
+  padding:30px 16px;text-align:center;
+  color:var(--txt-muted);font-size:.82rem;line-height:1.8;
+}
+.no-imgs .ni-icon{font-size:2.2rem;display:block;margin-bottom:10px;opacity:.4}
+
+/* ══════════════════════════════════════════════════════════
+   SPINNER
+══════════════════════════════════════════════════════════ */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .7s linear infinite;display:inline-block}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE PORTRAIT  (≤ 768px)
+══════════════════════════════════════════════════════════ */
+@media (max-width:768px) and (orientation:portrait){
+  body{overflow-y:auto;overflow-x:hidden}
+  .main{
+    flex-direction:column;
+    height:auto;
+    min-height:calc(100dvh - 50px);
+  }
+  .canvas-wrap{
+    padding:10px 8px 6px;
+    min-height:0;
+    flex:none;
+    /* ارتفاع منطقة العرض = نسبة من الشاشة */
+    height:50dvh;
+  }
+  .side-panel{
+    width:100%;min-width:0;
+    border-right:none;
+    border-top:1px solid var(--panel-border);
+    box-shadow:0 -4px 18px rgba(100,70,20,.07);
+    /* يملأ باقي الشاشة */
+    flex:1;
+    min-height:50dvh;
+    overflow-y:auto;
+  }
+  .topbar{padding:0 10px}
+  .topbar-logo{font-size:.88rem}
+  .btn-sm{font-size:.7rem;padding:5px 9px}
+  .img-grid{grid-template-columns:repeat(3,1fr);gap:7px;padding:10px 12px}
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE LANDSCAPE  (ارتفاع ≤ 500px — جوال أفقي)
+══════════════════════════════════════════════════════════ */
+@media (max-height:500px) and (orientation:landscape){
+  body{overflow:hidden}
+
+  .topbar{
+    height:42px;
+    padding:0 10px;
+  }
+  .topbar-logo{font-size:.82rem}
+  .btn-sm{font-size:.68rem;padding:4px 8px}
+
+  /* جانب بجانب: البطاقة يسار + اللوحة يمين */
+  .main{
+    flex-direction:row;
+    height:calc(100dvh - 42px);
+    overflow:hidden;
+  }
+
+  .canvas-wrap{
+    flex:1;
+    padding:6px;
+    overflow:hidden;
+    min-height:0;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .side-panel{
+    width:220px;
+    min-width:200px;
+    border-right:1px solid var(--panel-border);
+    border-top:none;
+    overflow:hidden;
+    flex-shrink:0;
+    height:100%;
+  }
+
+  /* تصغير عناصر اللوحة */
+  .tabs .tab{padding:7px 6px;font-size:.7rem}
+  .sec{padding:8px 10px}
+  .sec-title{font-size:.6rem;margin-bottom:7px}
+  .lbl{font-size:.62rem;margin-top:6px}
+  input[type=text]{padding:6px 9px;font-size:.82rem}
+  select{padding:6px 9px;font-size:.78rem}
+  .tog{padding:5px 3px;font-size:.66rem}
+  .rw{padding-top:15px}
+  .rw .rv{font-size:.6rem}
+  .img-grid{
+    grid-template-columns:repeat(2,1fr);
+    gap:6px;padding:8px 10px;
+  }
+  .infobar{font-size:.6rem;padding:3px 10px}
+}
+
+@media (max-width:480px) and (orientation:portrait){
+  .topbar-logo{font-size:.78rem}
+  .img-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+  TOP BAR
+═══════════════════════════════════════════════════════ -->
+<div class="topbar">
+  <span class="topbar-logo">✦ محرر بطاقات المعايدة</span>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost btn-sm" id="reset-btn">↺ إعادة</button>
+    <button class="btn btn-gold btn-sm" id="dl-btn" disabled>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      تحميل JPG
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+  MAIN
+═══════════════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- ── CANVAS ─────────────────────────────────────────── -->
+  <div class="canvas-wrap">
+    <div class="canvas-center" id="canvas-area">
+      <div id="card">
+        <img id="card-bg-img" alt=""/>
+        <div id="empty-state">
+          <div class="ei">🖼️</div>
+          <p>اختر تصميماً من القائمة الجانبية<br/>
+          <span style="font-size:.78rem">تبويب <strong>التصاميم</strong></span></p>
+        </div>
+        <div id="txt-layer">
+          <div id="txt-node">اكتب اسمك هنا</div>
+        </div>
+      </div>
+    </div>
+    <div class="infobar" id="infobar">اختر تصميماً للبدء</div>
+  </div>
+
+  <!-- ── SIDE PANEL ─────────────────────────────────────── -->
+  <div class="side-panel">
+
+    <div class="tabs">
+      <div class="tab on" id="tab-img" onclick="showTab('img')">🖼️ التصاميم</div>
+      <div class="tab"    id="tab-txt" onclick="showTab('txt')">✍️ النص</div>
+    </div>
+
+    <!-- PANE: DESIGNS -->
+    <div id="pane-img" class="pane">
+      <div id="img-grid-wrap"></div><!-- filled by JS -->
+    </div>
+
+    <!-- PANE: TEXT -->
+    <div id="pane-txt" class="pane" style="display:none">
+
+      <div class="sec">
+        <div class="sec-title">نص الاسم</div>
+        <input type="text" id="name-in" placeholder="اكتب اسمك هنا..." maxlength="60" value="" autocomplete="off"/>
+        <p style="font-size:.64rem;color:var(--txt-muted);margin-top:5px">✦ يظهر على البطاقة فقط بعد الكتابة</p>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">نوع الخط</div>
+        <select id="font-sel">
+          <optgroup label="── كلاسيكية تراثية ──">
+            <option value="Amiri">أميري — Amiri</option>
+            <option value="Scheherazade New">شهرزاد — Scheherazade</option>
+            <option value="Noto Serif Arabic">نوتو سيريف — Noto Serif</option>
+            <option value="Lateef">لطيف — Lateef</option>
+            <option value="Markazi Text">مركزي — Markazi Text</option>
+            <option value="Aref Ruqaa">عارف رقعة</option>
+            <option value="Noto Naskh Arabic">نوتو نسخ</option>
+            <option value="Mirza">ميرزا — Mirza</option>
+            <option value="Gulzar">گلزار — Gulzar</option>
+            <option value="Katibeh">كاتبة — Katibeh</option>
+            <option value="Jomhuria">جمهورية — Jomhuria</option>
+          </optgroup>
+          <optgroup label="── كوفية وزخرفية ──">
+            <option value="Rakkas">رقّاص — Rakkas</option>
+            <option value="Lalezar">لاليزار — Lalezar</option>
+            <option value="Reem Kufi">ريم كوفي — Reem Kufi</option>
+            <option value="Reem Kufi Fun">ريم كوفي مرح</option>
+            <option value="Kufam">كوفام — Kufam</option>
+          </optgroup>
+          <optgroup label="── عصرية حديثة ──">
+            <option value="Cairo">كايرو — Cairo</option>
+            <option value="Tajawal">تجوّل — Tajawal</option>
+            <option value="Almarai">المراعي — Almarai</option>
+            <option value="Mada">مدى — Mada</option>
+            <option value="El Messiri">المسيري — El Messiri</option>
+            <option value="Readex Pro">ريدكس — Readex Pro</option>
+            <option value="Noto Sans Arabic">نوتو سانس</option>
+            <option value="Noto Kufi Arabic">نوتو كوفي</option>
+            <option value="Zain">زين — Zain</option>
+          </optgroup>
+          <optgroup label="── سميكة وعريضة ──">
+            <option value="Changa">تشانغا — Changa</option>
+            <option value="IBM Plex Sans Arabic">IBM بلكس</option>
+            <option value="Baloo Bhaijaan 2">بالو — Baloo</option>
+            <option value="Rubik">روبيك — Rubik</option>
+            <option value="Harmattan">هرمتان — Harmattan</option>
+          </optgroup>
+        </select>
+        <div style="margin-top:9px">
+          <div class="tog-row">
+            <button class="tog on" id="fw-n" onclick="setFW('n')">عادي</button>
+            <button class="tog"    id="fw-b" onclick="setFW('b')">غامق</button>
+            <button class="tog"    id="fw-i" onclick="setFW('i')">مائل</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">حجم الخط</div>
+        <div class="rw">
+          <span class="rl">40</span>
+          <span class="rv" id="sz-v">50px</span>
+          <input type="range" id="sz-r" min="40" max="280" value="50" step="2"/>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">لون النص</div>
+        <div class="sw-row">
+          <input type="color" id="col-in" value="#000000"/>
+          <div id="swatches" style="display:flex;gap:5px;flex-wrap:wrap">
+            <div class="sw" style="background:#FFFFFF;border:2px solid #ddd" data-c="#FFFFFF"></div>
+            <div class="sw" style="background:#F5D98B" data-c="#F5D98B"></div>
+            <div class="sw" style="background:#D4A82A" data-c="#D4A82A"></div>
+            <div class="sw" style="background:#9A7318" data-c="#9A7318"></div>
+            <div class="sw" style="background:#3a2e1e" data-c="#3a2e1e"></div>
+            <div class="sw on" style="background:#000000;border:2px solid #aaa" data-c="#000000"></div>
+            <div class="sw" style="background:#1A5C3A" data-c="#1A5C3A"></div>
+            <div class="sw" style="background:#FF6B6B" data-c="#FF6B6B"></div>
+            <div class="sw" style="background:#74C0FC" data-c="#74C0FC"></div>
+            <div class="sw" style="background:#A9E34B" data-c="#A9E34B"></div>
+            <div class="sw" style="background:#E599F7" data-c="#E599F7"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">ظل النص</div>
+        <div class="tog-row" style="margin-bottom:9px">
+          <button class="tog on" id="sh-none"    onclick="setShadow('none')">بدون</button>
+          <button class="tog"    id="sh-soft"    onclick="setShadow('soft')">ناعم</button>
+          <button class="tog"    id="sh-strong"  onclick="setShadow('strong')">قوي</button>
+          <button class="tog"    id="sh-glow"    onclick="setShadow('glow')">توهج</button>
+          <button class="tog"    id="sh-outline" onclick="setShadow('outline')">إطار</button>
+        </div>
+        <div id="sh-col-row" style="display:none">
+          <label class="lbl">لون الظل</label>
+          <input type="color" id="sh-col" value="#000000"/>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">إعدادات إضافية</div>
+        <label class="lbl">تباعد الحروف</label>
+        <div class="rw">
+          <span class="rl">-10</span>
+          <span class="rv" id="sp-v">0px</span>
+          <input type="range" id="sp-r" min="-10" max="80" value="0" step="1"/>
+        </div>
+        <label class="lbl">شفافية النص</label>
+        <div class="rw">
+          <span class="rl">10%</span>
+          <span class="rv" id="op-v">100%</span>
+          <input type="range" id="op-r" min="10" max="100" value="100" step="5"/>
+        </div>
+      </div>
+
+    </div><!-- /pane-txt -->
+  </div><!-- /side-panel -->
+</div><!-- /main -->
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ██████████████████████████████████████████████████████████
+   ██                                                        ██
+   ██   ┌─────────────────────────────────────────────┐     ██
+   ██   │          قسم إضافة الصور للمبرمج            │     ██
+   ██   └─────────────────────────────────────────────┘     ██
+   ██                                                        ██
+   ██  أضف صورك في المصفوفة DESIGNS أدناه                   ██
+   ██  كل صورة تحتاج ثلاثة حقول:                            ██
+   ██                                                        ██
+   ██    id   ← معرّف فريد، أي نص بدون مسافات               ██
+   ██    src  ← مسار الصورة (انظر الأمثلة بالأسفل)          ██
+   ██    name ← الاسم الذي يظهر تحت الصورة في القائمة       ██
+   ██                                                        ██
+   ██  ── أمثلة على src ──────────────────────────────────   ██
+   ██                                                        ██
+   ██  صورة في نفس مجلد الملف:                              ██
+   ██    src: 'card1.jpg'                                    ██
+   ██                                                        ██
+   ██  صورة داخل مجلد فرعي:                                 ██
+   ██    src: 'images/eid_design.png'                        ██
+   ██                                                        ██
+   ██  صورة من رابط خارجي (CORS يجب أن يكون مسموحاً):       ██
+   ██    src: 'https://example.com/path/to/image.jpg'        ██
+   ██                                                        ██
+   ██  ── المقاس الموصى به للصور ──────────────────────────  ██
+   ██    1920 × 1080 بكسل (أفقي) — PNG أو JPG               ██
+   ██                                                        ██
+   ██  ── مثال على إضافة ثلاث صور ────────────────────────  ██
+   ██                                                        ██
+   ██   const DESIGNS = [                                    ██
+   ██     { id:'d1', src:'eid1.jpg',   name:'تصميم العيد ١'} ██
+   ██     { id:'d2', src:'eid2.png',   name:'تصميم العيد ٢'} ██
+   ██     { id:'d3', src:'eid3.jpg',   name:'تصميم رمضان' } ██
+   ██   ];                                                   ██
+   ██                                                        ██
+   ██████████████████████████████████████████████████████████
+═══════════════════════════════════════════════════════════════ */
+
+const DESIGNS = [
+  // ▼▼▼  أضف صورك هنا  ▼▼▼
+  {
+    id: 'd1',
+    src: 'https://raw.githubusercontent.com/ziyad1431-zat/greeting-cards/main/WhatsApp%20Image%202026-03-19%20at%207.44.59%20PM.jpeg',
+    name: 'تصميم ١'
+  },
+  // { id: 'd2', src: 'https://raw.githubusercontent.com/ziyad1431-zat/greeting-cards/main/اسم-الصورة.jpg', name: 'تصميم ٢' },
+  // ▲▲▲  أضف صورك هنا  ▲▲▲
+];
+
+/* ═══════════════════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════════════════ */
+let CW = 1080, CH = 1920;  /* افتراضي: عمودي — يتغير تلقائياً عند تحميل الصورة */
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let scaleFactor = 1;
+let txPct = .5, tyPct = .75;
+let activeId = null;
+let shadow = 'none', fontW = 'n';
+
+/* ═══════════════════════════════════════════════════════════
+   ELEMENTS
+═══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const card       = $('card');
+const cardBgI    = $('card-bg-img');
+const emptyState = $('empty-state');
+const txtLayer   = $('txt-layer');
+const txtNode    = $('txt-node');
+const nameIn     = $('name-in');
+const fontSel    = $('font-sel');
+const szR        = $('sz-r');  const szV = $('sz-v');
+const opR        = $('op-r');  const opV = $('op-v');
+const spR        = $('sp-r');  const spV = $('sp-v');
+const colIn      = $('col-in');
+const shCol      = $('sh-col');
+const dlBtn      = $('dl-btn');
+const infobar    = $('infobar');
+const canvasArea = $('canvas-area');
+
+/* ═══════════════════════════════════════════════════════════
+   SCALE — يضبط البطاقة لتناسب منطقة العرض بدون قص
+═══════════════════════════════════════════════════════════ */
+function computeScale(){
+  const wrap   = document.querySelector('.canvas-wrap');
+  const aw     = wrap.clientWidth  - 40;
+  const ah     = wrap.clientHeight - 40;
+  scaleFactor  = Math.min(aw / CW, ah / CH, 1);
+
+  /* حجم البطاقة الحقيقي */
+  card.style.width  = CW + 'px';
+  card.style.height = CH + 'px';
+  card.style.transform       = `scale(${scaleFactor})`;
+  card.style.transformOrigin = 'top left';
+
+  /* الحاوية تأخذ الحجم المرئي بعد التصغير */
+  const center = document.querySelector('.canvas-center');
+  center.style.width  = Math.round(CW * scaleFactor) + 'px';
+  center.style.height = Math.round(CH * scaleFactor) + 'px';
+}
+computeScale();
+window.addEventListener('resize', computeScale);
+
+/* ═══════════════════════════════════════════════════════════
+   BUILD DESIGNS GALLERY
+═══════════════════════════════════════════════════════════ */
+function buildGallery(){
+  const wrap = $('img-grid-wrap');
+  wrap.innerHTML = '';
+
+  if(!DESIGNS.length){
+    wrap.innerHTML = `
+      <div class="no-imgs">
+        <span class="ni-icon">🖼️</span>
+        لا توجد صور مضافة بعد.<br/>
+        افتح الكود وأضف صورك<br/>في مصفوفة <strong>DESIGNS</strong>
+      </div>`;
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'img-grid';
+
+  DESIGNS.forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'img-card' + (d.id === activeId ? ' on' : '');
+    div.dataset.id = d.id;
+
+    const img = document.createElement('img');
+    img.src = d.src;
+    img.alt = d.name;
+    img.loading = 'lazy';
+    div.appendChild(img);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'img-card-label';
+    lbl.textContent = d.name;
+    div.appendChild(lbl);
+
+    div.addEventListener('click', () => selectDesign(d));
+    grid.appendChild(div);
+  });
+
+  wrap.appendChild(grid);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SELECT A DESIGN
+═══════════════════════════════════════════════════════════ */
+function selectDesign(d){
+  activeId = d.id;
+  document.querySelectorAll('.img-card').forEach(c =>
+    c.classList.toggle('on', c.dataset.id === d.id)
+  );
+  info('⏳ جارٍ تحميل الصورة...');
+
+  const tmp = new Image();
+  tmp.onload = function(){
+    /* ١ — أبعاد الصورة الحقيقية */
+    CW = tmp.naturalWidth;
+    CH = tmp.naturalHeight;
+
+    /* ٢ — ضبط البطاقة */
+    card.style.width  = CW + 'px';
+    card.style.height = CH + 'px';
+
+    /* ٣ — تطبيق الصورة */
+    cardBgI.src           = d.src;
+    cardBgI.style.display = 'block';
+    emptyState.style.display = 'none';
+    txtNode.style.display = 'block';
+    dlBtn.disabled        = false;
+
+    /* ٤ — حساب scale بالأبعاد الصحيحة */
+    computeScale();
+    applyPos();
+    applyStyles();
+    info('✅ التصميم جاهز — انتقل إلى تبويب النص لتخصيص الاسم');
+  };
+  tmp.onerror = function(){
+    info('⚠️ تعذّر تحميل الصورة — تحقق من الرابط في DESIGNS');
+  };
+  tmp.src = d.src;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEXT STYLES
+═══════════════════════════════════════════════════════════ */
+function applyStyles(){
+  const font = fontSel.value;
+  const sz   = +szR.value;
+  const col  = colIn.value;
+  const op   = +opR.value / 100;
+  const sp   = +spR.value;
+  const fw   = fontW === 'b' ? '700' : '400';
+  const fi   = fontW === 'i' ? 'italic' : 'normal';
+  const name = nameIn.value.trim();
+
+  /* أخفِ النص تماماً إذا كان الحقل فارغاً — لا يظهر على التصميم */
+  if(!name || !activeId){
+    txtNode.style.display = 'none';
+    return;
+  }
+
+  txtNode.style.display = 'block';
+  Object.assign(txtNode.style, {
+    fontFamily:    `'${font}', serif`,
+    fontSize:      sz + 'px',
+    color:         col,
+    opacity:       op,
+    letterSpacing: sp + 'px',
+    fontWeight:    fw,
+    fontStyle:     fi,
+    textShadow:    buildShadow(),
+  });
+  txtNode.textContent = name;
+}
+
+function buildShadow(){
+  const sc = shCol.value;
+  switch(shadow){
+    case 'soft':    return `0 6px 30px ${sc}88, 0 2px 10px ${sc}55`;
+    case 'strong':  return `4px 4px 0 ${sc}, 6px 6px 0 ${sc}44`;
+    case 'glow':    return `0 0 30px ${sc}cc, 0 0 70px ${sc}88, 0 0 110px ${sc}44`;
+    case 'outline': return `2px 0 0 ${sc}, -2px 0 0 ${sc}, 0 2px 0 ${sc}, 0 -2px 0 ${sc}`;
+    default:        return 'none';
+  }
+}
+
+function setShadow(type){
+  shadow = type;
+  ['none','soft','strong','glow','outline'].forEach(t => {
+    const el = $('sh-' + t);
+    if(el) el.classList.toggle('on', t === type);
+  });
+  $('sh-col-row').style.display = type !== 'none' ? 'block' : 'none';
+  applyStyles();
+}
+
+function setFW(type){
+  fontW = type;
+  ['n','b','i'].forEach(t => $('fw-' + t).classList.toggle('on', t === type));
+  applyStyles();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   POSITION — ثابت لا يتغير بالسحب
+═══════════════════════════════════════════════════════════ */
+function applyPos(){
+  txtNode.style.left = (txPct * CW) + 'px';
+  txtNode.style.top  = (tyPct * CH) + 'px';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SWATCHES
+═══════════════════════════════════════════════════════════ */
+$('swatches').addEventListener('click', e => {
+  const sw = e.target.closest('.sw'); if(!sw) return;
+  document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+  sw.classList.add('on');
+  colIn.value = sw.dataset.c;
+  applyStyles();
+});
+colIn.addEventListener('input', applyStyles);
+
+/* ═══════════════════════════════════════════════════════════
+   RANGES
+═══════════════════════════════════════════════════════════ */
+function rg(r){
+  const p = ((r.value - r.min) / (r.max - r.min)) * 100;
+  r.style.background = `linear-gradient(90deg, var(--gold) ${p}%, #e0d5c0 ${p}%)`;
+}
+[szR, opR, spR].forEach(rg);
+
+szR.addEventListener('input', () => { szV.textContent = szR.value + 'px'; rg(szR); applyStyles(); });
+opR.addEventListener('input', () => { opV.textContent = opR.value + '%';  rg(opR); applyStyles(); });
+spR.addEventListener('input', () => { spV.textContent = spR.value + 'px'; rg(spR); applyStyles(); });
+nameIn.addEventListener('input', applyStyles);
+fontSel.addEventListener('change', applyStyles);
+shCol.addEventListener('input', applyStyles);
+
+/* ═══════════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════════ */
+function showTab(id){
+  ['img','txt'].forEach(t => {
+    $('tab-' + t).classList.toggle('on', t === id);
+    $('pane-' + t).style.display = t === id ? 'block' : 'none';
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════════ */
+$('reset-btn').addEventListener('click', () => {
+  if(!confirm('إعادة تعيين كل شيء؟')) return;
+  activeId = null;
+  CW = 1080; CH = 1920;
+  card.style.width  = CW + 'px';
+  card.style.height = CH + 'px';
+  cardBgI.src = ''; cardBgI.style.display = 'none';
+  emptyState.style.display = 'flex';
+  txtNode.style.display = 'none';
+  dlBtn.disabled = true;
+  document.querySelectorAll('.img-card').forEach(c => c.classList.remove('on'));
+  nameIn.value = '';
+  szR.value = 50; szV.textContent = '50px';
+  opR.value = 100; opV.textContent = '100%';
+  spR.value = 0;   spV.textContent = '0px';
+  colIn.value = '#000000';
+  [szR, opR, spR].forEach(rg);
+  setShadow('none'); setFW('n');
+  txPct = .5; tyPct = .75;
+  computeScale(); applyPos(); applyStyles();
+  info('اختر تصميماً للبدء');
+});
+
+/* ═══════════════════════════════════════════════════════════
+   DOWNLOAD — Web Share API (iOS) + مباشر (Android/Desktop)
+═══════════════════════════════════════════════════════════ */
+$('dl-btn').addEventListener('click', async () => {
+  dlBtn.disabled = true;
+  dlBtn.innerHTML = '<span class="spin">⏳</span> جارٍ التصدير...';
+
+  // أخفِ حدود التحديد قبل التصوير
+  txtNode.classList.remove('sel');
+
+  // ── ١: احفظ حالة البطاقة ثم اعرضها بحجمها الحقيقي خارج الشاشة ──
+  const saved = {
+    transform   : card.style.transform,
+    boxShadow   : card.style.boxShadow,
+    borderRadius: card.style.borderRadius,
+    position    : card.style.position,
+    top         : card.style.top,
+    left        : card.style.left,
+    zIndex      : card.style.zIndex,
+    visibility  : card.style.visibility,
+  };
+  Object.assign(card.style, {
+    transform   : 'scale(1)',
+    boxShadow   : 'none',
+    borderRadius: '0',
+    position    : 'fixed',
+    top         : '0',
+    left        : '0',
+    zIndex      : '-9999',
+    visibility  : 'hidden',
+  });
+
+  try {
+    // ── ٢: التقط البطاقة بحجمها الحقيقي ──
+    const canvas = await html2canvas(card, {
+      scale          : 1,
+      width          : CW,
+      height         : CH,
+      useCORS        : true,
+      allowTaint     : true,
+      backgroundColor: '#ffffff',
+      logging        : false,
+      x: 0, y: 0,
+    });
+
+    // ── ٣: أعِد حالة البطاقة فوراً ──
+    Object.assign(card.style, saved);
+
+    const name    = (nameIn.value.trim().replace(/[\s✦]/g, '') || 'بطاقة');
+    const isIOS   = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    // ── ٤: حوّل الـ canvas إلى Blob (أفضل للمشاركة) ──
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.95));
+    const file = new File([blob], `${name}.jpg`, { type: 'image/jpeg' });
+
+    // ── ٥: iOS — استخدم Web Share API لحفظ مباشر في مكتبة الصور ──
+    if(isIOS && navigator.canShare && navigator.canShare({ files: [file] })){
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'بطاقة المعايدة',
+        });
+        info('✅ تمت المشاركة — اختر "حفظ الصورة" من القائمة');
+      } catch(shareErr){
+        // المستخدم أغلق قائمة المشاركة — ليس خطأ حقيقياً
+        if(shareErr.name !== 'AbortError'){
+          // Web Share فشل — اعرض الصورة كـ overlay
+          showIOSOverlay(canvas);
+        }
+        info('اضغط مطولاً على الصورة لحفظها');
+      }
+
+    // ── ٦: iOS بدون Web Share (نادر) — overlay بالضغط المطوّل ──
+    } else if(isIOS){
+      showIOSOverlay(canvas);
+
+    // ── ٧: Android / Chrome / Desktop — تحميل مباشر ──
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.download = `${name}.jpg`;
+      a.href     = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // نحرر الـ URL بعد لحظة
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      info('✅ تم التحميل بصيغة JPG');
+    }
+
+  } catch(err){
+    // أعِد الحالة إن حصل خطأ
+    Object.assign(card.style, saved);
+    console.error('Export error:', err);
+    alert('خطأ في التصدير.\nتأكد من:\n• أن الصور مرفوعة على GitHub\n• أن GitHub Pages مفعّل\n• وأن الرابط يبدأ بـ raw.githubusercontent.com');
+  }
+
+  txtNode.classList.add('sel');
+  dlBtn.disabled = false;
+  dlBtn.innerHTML = `
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg> تحميل JPG`;
+});
+
+/* ── مساعد: overlay للضغط المطوّل على iOS عند عدم توفر Web Share ── */
+function showIOSOverlay(canvas){
+  const dataURL = canvas.toDataURL('image/jpeg', 0.95);
+  const overlay = document.createElement('div');
+  overlay.style.cssText = [
+    'position:fixed;inset:0;z-index:9999',
+    'background:rgba(0,0,0,.92)',
+    'display:flex;flex-direction:column',
+    'align-items:center;justify-content:center;gap:16px',
+    'padding:20px',
+  ].join(';');
+
+  const img = document.createElement('img');
+  img.src = dataURL;
+  img.style.cssText = 'max-width:100%;max-height:75dvh;object-fit:contain;border-radius:8px';
+
+  const msg = document.createElement('p');
+  msg.innerHTML = '📥 اضغط مطولاً على الصورة ← <strong style="color:#f5d98b">حفظ الصورة</strong>';
+  msg.style.cssText = 'color:#fff;font-size:15px;text-align:center;font-family:Tajawal,sans-serif;margin:0';
+
+  const close = document.createElement('button');
+  close.textContent = '✕ إغلاق';
+  close.style.cssText = [
+    'background:rgba(255,255,255,.12);color:#fff',
+    'border:1px solid rgba(255,255,255,.25);border-radius:8px',
+    'padding:8px 22px;font-size:14px;font-family:Tajawal,sans-serif',
+    'cursor:pointer',
+  ].join(';');
+  close.onclick = () => document.body.removeChild(overlay);
+
+  overlay.append(img, msg, close);
+  document.body.appendChild(overlay);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INFO BAR
+═══════════════════════════════════════════════════════════ */
+let _it;
+function info(msg){
+  infobar.textContent = msg;
+  clearTimeout(_it);
+  if(msg.startsWith('✅'))
+    _it = setTimeout(() => infobar.textContent = 'اسحب النص لتحديد موضعه', 4000);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+buildGallery();
+applyStyles();
+applyPos();
+</script>
+</body>
+</html>
